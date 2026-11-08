@@ -1,3 +1,4 @@
+import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
@@ -6,6 +7,12 @@ const host = process.env.TAURI_DEV_HOST;
 
 export default defineConfig(async () => ({
   plugins: [react()],
+  resolve: {
+    alias: {
+      // 应用图标与打包图标保持同一份文件，开屏动画按需引用
+      "@icons": fileURLToPath(new URL("./src-tauri/icons", import.meta.url)),
+    },
+  },
   clearScreen: false,
   server: {
     port: 5174,

@@ -8,6 +8,7 @@ import { useSettings } from "./context/SettingsContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Sidebar } from "./components/Sidebar";
 import { HomePage } from "./components/HomePage";
+import { SplashScreen } from "./components/SplashScreen";
 import { cn } from "./utils/cn";
 import { useGlassBg } from "./hooks/useGlassBg";
 import { VIEW_TYPES, type NavigableViewType } from "./types";
@@ -42,6 +43,9 @@ function AppContent() {
   const [shouldMountKnowledgeBase, setShouldMountKnowledgeBase] = useState(
     currentView === VIEW_TYPES.KNOWLEDGE_BASE
   );
+  // 启动开屏动画，结束后卸载覆盖层；回调保持稳定，避免开屏计时被重置
+  const [splashDone, setSplashDone] = useState(false);
+  const handleSplashDone = useCallback(() => setSplashDone(true), []);
 
   useEffect(() => {
     // Load saved theme and show window
@@ -62,7 +66,13 @@ function AppContent() {
       }
       if (!hasRequestedInitialWindowShow) {
         hasRequestedInitialWindowShow = true;
-        invoke("show_window").catch(console.error);
+        // 等开屏覆盖层（含主题背景色）完成首帧合成后再显示窗口，
+        // 避免用户看到未上色的空白启动帧
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            invoke("show_window").catch(console.error);
+          });
+        });
       }
     };
     init();
@@ -313,6 +323,9 @@ function AppContent() {
           )}
         </main>
       </div>
+
+      {/* 启动开屏覆盖层：动画结束后卸载，不参与后续布局 */}
+      {!splashDone && <SplashScreen onDone={handleSplashDone} />}
     </div>
   );
 }
