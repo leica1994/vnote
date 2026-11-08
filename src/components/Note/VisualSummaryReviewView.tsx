@@ -101,7 +101,9 @@ export function VisualSummaryReviewView({ markdown, layout }: VisualSummaryRevie
       </div>
 
       {section.body ? (
-        <div className="max-h-[46vh] overflow-y-auto pr-1">
+        // 逐图模式：段落自然展开，避免与整页滚动叠加出第二根滚动条
+        // 列表模式：保留段落内的独立滚动区，防止单个长章节把卡片撑得过高
+        <div className={layout === "focus" ? undefined : "max-h-[46vh] overflow-y-auto pr-1"}>
           <MarkdownRenderer
             content={section.body}
             variant="compact"
@@ -122,7 +124,8 @@ export function VisualSummaryReviewView({ markdown, layout }: VisualSummaryRevie
     const totalFocusPages = orderedSections.length;
 
     return (
-      <div className="flex h-full flex-col overflow-y-auto py-3">
+      // 逐图模式保留滚动（长段落可滚动查看），但隐藏滚动条
+      <div className="flex h-full flex-col overflow-y-auto scrollbar-hide py-3">
         {/* 全宽展示，不再限制 max-w-5xl */}
         <div className="mx-auto flex w-full flex-col px-4">
           <div
