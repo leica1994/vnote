@@ -30,6 +30,10 @@ import {
   Network,
   Palette,
   Map as MapIcon,
+  Images,
+  Rows3,
+  Image as ImageIcon,
+  Maximize2,
   type LucideIcon,
 } from "lucide-react";
 import { save } from "@tauri-apps/plugin-dialog";
@@ -211,6 +215,8 @@ interface ToolbarIconButtonProps {
   spinning?: boolean;
   compact?: boolean;
   className?: string;
+  /** 选中态样式，追加在 className 之后以覆盖其中的背景色 */
+  activeClassName?: string;
   onClick: () => void;
   children?: React.ReactNode;
 }
@@ -228,6 +234,7 @@ function ToolbarIconButton({
   spinning = false,
   compact = false,
   className,
+  activeClassName,
   onClick,
   children,
 }: ToolbarIconButtonProps) {
@@ -240,11 +247,12 @@ function ToolbarIconButton({
         active && "border-blue-200/80 bg-blue-50/90 text-blue-600 shadow-sm shadow-blue-100/60 dark:border-blue-500/30 dark:bg-blue-500/14 dark:text-blue-400 dark:shadow-transparent",
         disabled && "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none",
         className,
+        active && activeClassName,
       )}
       title={label}
       aria-label={label}
     >
-      <Icon className={cn("w-4 h-4", spinning && "animate-spin")} />
+      <Icon className={cn("w-4 h-4 shrink-0", spinning && "animate-spin")} />
       {!compact && children}
     </button>
   );
@@ -280,7 +288,6 @@ export function NoteContentPanel({ note, onGenerationComplete, aiConfigs, curren
   const visualToolbarRef = useRef<HTMLDivElement>(null);
   const visualToolbarLeftRef = useRef<HTMLDivElement>(null);
   const visualToolbarRightRef = useRef<HTMLDivElement>(null);
-  const visualToolbarMeasureLeftExpandedRef = useRef<HTMLDivElement>(null);
   const visualToolbarMeasureRightCompactRef = useRef<HTMLDivElement>(null);
   const visualToolbarMeasureRightExpandedRef = useRef<HTMLDivElement>(null);
 
@@ -306,6 +313,7 @@ export function NoteContentPanel({ note, onGenerationComplete, aiConfigs, curren
   const [isCompactVisualToolbarLeft, setIsCompactVisualToolbarLeft] = useState(false);
   const [isCompactVisualToolbarRight, setIsCompactVisualToolbarRight] = useState(true);
   const visualToolbarCompactStateRef = useRef<{ left: boolean; right: boolean }>({ left: false, right: true });
+  const visualToolbarMeasureLeftExpandedRef = useRef<HTMLDivElement>(null);
 
   const handleOriginalChapterJump = useCallback((chapter: DetailedReadingChapter) => {
     userClickTimeRef.current = Date.now();
@@ -618,6 +626,9 @@ export function NoteContentPanel({ note, onGenerationComplete, aiConfigs, curren
   const [isEditMode, setIsEditMode] = useState(false);
   const [isVisualEditMode, setIsVisualEditMode] = useState(false);
   const [visualEditContent, setVisualEditContent] = useState<string>("");
+  // 视觉化总结展示模式：图文阅读 / 看图复习；复习布局：列表 / 逐图
+  const [visualDisplayMode, setVisualDisplayMode] = useState<"article" | "review">("article");
+  const [visualReviewLayout, setVisualReviewLayout] = useState<"list" | "focus">("list");
   const [showVisualChapterDropdown, setShowVisualChapterDropdown] = useState(false);
   const [activeVisualChapterIndex, setActiveVisualChapterIndex] = useState(-1);
   const visualChapterDropdownRef = useRef<HTMLDivElement>(null);
@@ -1234,14 +1245,13 @@ export function NoteContentPanel({ note, onGenerationComplete, aiConfigs, curren
     const toolbarElement = originalToolbarRef.current;
     const leftElement = originalToolbarLeftRef.current;
     const rightElement = originalToolbarRightRef.current;
-    const measureLeftExpandedElement = originalToolbarMeasureLeftExpandedRef.current;
     const measureRightCompactElement = originalToolbarMeasureRightCompactRef.current;
     const measureRightExpandedElement = originalToolbarMeasureRightExpandedRef.current;
-    if (!toolbarElement || !measureLeftExpandedElement || !measureRightCompactElement || !measureRightExpandedElement) return;
+    if (!toolbarElement || !leftElement || !measureRightCompactElement || !measureRightExpandedElement) return;
 
     const updateCompactMode = () => {
       const toolbarWidth = toolbarElement.clientWidth;
-      const leftExpandedWidth = getElementContentWidth(measureLeftExpandedElement);
+      const leftExpandedWidth = getElementContentWidth(leftElement);
       const rightCompactWidth = getElementContentWidth(measureRightCompactElement);
       const rightExpandedWidth = getElementContentWidth(measureRightExpandedElement);
 
@@ -1269,7 +1279,6 @@ export function NoteContentPanel({ note, onGenerationComplete, aiConfigs, curren
     observer.observe(toolbarElement);
     if (leftElement) observer.observe(leftElement);
     if (rightElement) observer.observe(rightElement);
-    observer.observe(measureLeftExpandedElement);
     observer.observe(measureRightCompactElement);
     observer.observe(measureRightExpandedElement);
 
@@ -1320,7 +1329,7 @@ export function NoteContentPanel({ note, onGenerationComplete, aiConfigs, curren
     observer.observe(measureRightExpandedElement);
 
     return () => observer.disconnect();
-  }, [activeTab, isVisualEditMode, visualChapterItems.length]);
+  }, [activeTab, isVisualEditMode, visualDisplayMode, visualChapterItems.length]);
 
   const handleVisualChapterJump = useCallback((index: number) => {
     const didScroll = scrollToMarkdownHeading(index);
@@ -1343,7 +1352,7 @@ export function NoteContentPanel({ note, onGenerationComplete, aiConfigs, curren
     if (activeTab !== "visual" || isVisualEditMode || visualChapterItems.length === 0) {
       setShowVisualChapterDropdown(false);
     }
-  }, [activeTab, isVisualEditMode, visualChapterItems.length]);
+  }, [activeTab, isVisualEditMode, visualDisplayMode, visualChapterItems.length]);
 
   useEffect(() => {
     visualManualScrollingRef.current = false;
@@ -1487,7 +1496,8 @@ export function NoteContentPanel({ note, onGenerationComplete, aiConfigs, curren
     setShowVisualChapterDropdown(false);
 
     if (!isVisualEditMode) {
-      // 进入编辑模式，优先使用已保存的编辑内容
+      // 进入编辑模式，优先使用已保存的编辑内容；同时回到图文阅读，避免编辑态与复习态混淆
+      setVisualDisplayMode("article");
       const savedMarkdown = getSavedVisualMarkdown();
       setVisualEditContent(savedMarkdown || getVisualSummaryDisplayMarkdown());
     } else {
@@ -2511,6 +2521,21 @@ Video subtitles content:`;
   const toolbarActionClusterClass = "flex max-w-full shrink-0 items-center gap-2 overflow-visible rounded-2xl border border-slate-200/75 bg-white/55 p-1 shadow-sm shadow-slate-200/40 dark:border-vnote-border/80 dark:bg-white/5 dark:shadow-none";
   const toolbarActionButtonClass = "min-w-0 flex-1 justify-center whitespace-nowrap sm:flex-none sm:justify-start";
   const toolbarCompactButtonClass = "min-w-0 justify-center";
+  // 视觉化总结展示模式切换：未选中保持透明，选中态用高对比度强调色
+  const visualToggleInactiveClass =
+    "border-transparent bg-transparent text-slate-500 shadow-none hover:bg-white/80 dark:bg-transparent dark:text-slate-400 dark:hover:bg-white/8";
+  const visualToggleActiveClass =
+    "border-blue-300/70 bg-blue-100/80 text-blue-700 shadow-sm shadow-blue-100/50 hover:border-blue-300/70 hover:bg-blue-100/90 hover:text-blue-700 dark:border-blue-400/40 dark:bg-blue-500/20 dark:text-blue-300 dark:hover:border-blue-400/40 dark:hover:bg-blue-500/26 dark:hover:text-blue-200";
+  // 收缩时与编辑/复制等按钮一致：只保留图标（compact 分支不渲染文字）
+  const visualToggleButtonClass = (compact: boolean) =>
+    cn(
+      toolbarButtonClass,
+      compact ? toolbarCompactButtonClass : toolbarActionButtonClass,
+      visualToggleInactiveClass,
+      compact ? "shrink-0 overflow-hidden" : "shrink-0 overflow-hidden px-1.5 sm:px-2"
+    );
+  const visualToggleButtonLabelClass = "truncate";
+
   const toolbarMetaPillClass = "inline-flex min-h-9 items-center rounded-xl border border-slate-200/80 bg-white/80 px-3 py-1.5 text-xs font-medium text-slate-500 shadow-sm dark:border-vnote-border/80 dark:bg-white/5 dark:text-slate-400";
   const dropdownMenuClass = "absolute top-full left-0 mt-2 z-[120] max-h-80 overflow-auto rounded-2xl border border-slate-200/95 bg-white shadow-[0_28px_80px_rgba(15,23,42,0.28)] ring-1 ring-slate-200/80 dark:border-vnote-border/95 dark:bg-slate-900 dark:ring-white/10";
   const dropdownHeaderClass = "sticky top-0 flex items-center gap-2 border-b border-slate-200/90 bg-white px-4 py-2 dark:border-vnote-border/90 dark:bg-slate-900";
@@ -2868,6 +2893,58 @@ Video subtitles content:`;
                   <span className="truncate">共 {visualChapterItems.length} 个章节</span>
                   <ChevronDown className="w-3.5 h-3.5" />
                 </button>
+              </div>
+            )}
+            {!isVisualEditMode && (
+              <div className={cn(toolbarActionClusterClass, "shrink-0")}>
+                <ToolbarIconButton
+                  icon={Rows3}
+                  label="图文阅读"
+                  active={visualDisplayMode === "article"}
+                  activeClassName={visualToggleActiveClass}
+                  compact={false}
+                  className={visualToggleButtonClass(false)}
+                  onClick={() => setVisualDisplayMode("article")}
+                >
+                  <span className={visualToggleButtonLabelClass}>图文阅读</span>
+                </ToolbarIconButton>
+                <ToolbarIconButton
+                  icon={Images}
+                  label="看图复习"
+                  active={visualDisplayMode === "review"}
+                  activeClassName={visualToggleActiveClass}
+                  compact={false}
+                  className={visualToggleButtonClass(false)}
+                  onClick={() => setVisualDisplayMode("review")}
+                >
+                  <span className={visualToggleButtonLabelClass}>看图复习</span>
+                </ToolbarIconButton>
+              </div>
+            )}
+            {!isVisualEditMode && visualDisplayMode === "review" && (
+              <div className={cn(toolbarActionClusterClass, "shrink-0")}>
+                    <ToolbarIconButton
+                      icon={ImageIcon}
+                      label="列表"
+                      active={visualReviewLayout === "list"}
+                      activeClassName={visualToggleActiveClass}
+                      compact={false}
+                      className={visualToggleButtonClass(false)}
+                      onClick={() => setVisualReviewLayout("list")}
+                    >
+                      <span className={visualToggleButtonLabelClass}>列表</span>
+                    </ToolbarIconButton>
+                    <ToolbarIconButton
+                      icon={Maximize2}
+                      label="逐图"
+                      active={visualReviewLayout === "focus"}
+                      activeClassName={visualToggleActiveClass}
+                      compact={false}
+                      className={visualToggleButtonClass(false)}
+                      onClick={() => setVisualReviewLayout("focus")}
+                    >
+                      <span className={visualToggleButtonLabelClass}>逐图</span>
+                    </ToolbarIconButton>
               </div>
             )}
           </div>
@@ -3371,6 +3448,58 @@ Video subtitles content:`;
                 </div>
               </>
             )}
+            {!isVisualEditMode && (
+              <div className={cn(toolbarActionClusterClass, "shrink-0")}>
+                <ToolbarIconButton
+                  icon={Rows3}
+                  label="图文阅读"
+                  active={visualDisplayMode === "article"}
+                  activeClassName={visualToggleActiveClass}
+                  compact={isCompactVisualToolbarLeft}
+                  className={visualToggleButtonClass(isCompactVisualToolbarLeft)}
+                  onClick={() => setVisualDisplayMode("article")}
+                >
+                  <span className={visualToggleButtonLabelClass}>图文阅读</span>
+                </ToolbarIconButton>
+                <ToolbarIconButton
+                  icon={Images}
+                  label="看图复习"
+                  active={visualDisplayMode === "review"}
+                  activeClassName={visualToggleActiveClass}
+                  compact={isCompactVisualToolbarLeft}
+                  className={visualToggleButtonClass(isCompactVisualToolbarLeft)}
+                  onClick={() => setVisualDisplayMode("review")}
+                >
+                  <span className={visualToggleButtonLabelClass}>看图复习</span>
+                </ToolbarIconButton>
+              </div>
+            )}
+            {!isVisualEditMode && visualDisplayMode === "review" && (
+              <div className={cn(toolbarActionClusterClass, "shrink-0")}>
+                <ToolbarIconButton
+                  icon={ImageIcon}
+                  label="列表"
+                  active={visualReviewLayout === "list"}
+                  activeClassName={visualToggleActiveClass}
+                  compact={isCompactVisualToolbarLeft}
+                  className={visualToggleButtonClass(isCompactVisualToolbarLeft)}
+                  onClick={() => setVisualReviewLayout("list")}
+                >
+                  <span className={visualToggleButtonLabelClass}>列表</span>
+                </ToolbarIconButton>
+                <ToolbarIconButton
+                  icon={Maximize2}
+                  label="逐图"
+                  active={visualReviewLayout === "focus"}
+                  activeClassName={visualToggleActiveClass}
+                  compact={isCompactVisualToolbarLeft}
+                  className={visualToggleButtonClass(isCompactVisualToolbarLeft)}
+                  onClick={() => setVisualReviewLayout("focus")}
+                >
+                  <span className={visualToggleButtonLabelClass}>逐图</span>
+                </ToolbarIconButton>
+              </div>
+            )}
           </div>
           <div ref={visualToolbarRightRef} className={toolbarSectionEndNoWrapClass} data-toolbar-row>
             <div className={toolbarActionClusterClass}>
@@ -3733,6 +3862,8 @@ Video subtitles content:`;
             editContent={visualEditContent}
             onEditContentChange={setVisualEditContent}
             savedMarkdownContent={visualSummaryDisplayMarkdown}
+            displayMode={visualDisplayMode}
+            reviewLayout={visualReviewLayout}
           />
         )}
         {activeTab === "custom" && (

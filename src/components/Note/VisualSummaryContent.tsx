@@ -9,6 +9,10 @@ import { cn } from "../../utils/cn";
 import { useGlassBg } from "../../hooks/useGlassBg";
 import { TableOfContents } from "./TableOfContents";
 import { MarkdownRenderer } from "../Markdown/MarkdownRenderer";
+import {
+  VisualSummaryReviewView,
+  type VisualReviewLayout,
+} from "./VisualSummaryReviewView";
 
 interface VisualSummaryContentProps {
   isEditMode?: boolean;
@@ -16,6 +20,10 @@ interface VisualSummaryContentProps {
   onEditContentChange?: (content: string) => void;
   /** 已保存的 Markdown 编辑内容（用户编辑后保存的内容） */
   savedMarkdownContent?: string | null;
+  /** 展示模式：图文阅读 / 图片复习（由工具栏切换） */
+  displayMode?: "article" | "review";
+  /** 图片复习布局：列表（一图一行）/ 逐图 */
+  reviewLayout?: VisualReviewLayout;
 }
 
 export function VisualSummaryContent({
@@ -23,6 +31,8 @@ export function VisualSummaryContent({
   editContent = "",
   onEditContentChange,
   savedMarkdownContent,
+  displayMode = "article",
+  reviewLayout = "list",
 }: VisualSummaryContentProps) {
   const glassPanel = useGlassBg("panel");
 
@@ -62,6 +72,10 @@ export function VisualSummaryContent({
         />
       </div>
     );
+  }
+
+  if (displayMode === "review") {
+    return <VisualSummaryReviewView markdown={markdownContent} layout={reviewLayout} />;
   }
 
   return (
