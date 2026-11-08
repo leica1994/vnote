@@ -1365,7 +1365,7 @@ export function NoteContentPanel({ note, onGenerationComplete, aiConfigs, curren
   }, [note.id, visualSummaryDisplayMarkdown, visualChapterItems.length]);
 
   useEffect(() => {
-    if (activeTab !== "visual" || isVisualEditMode || visualChapterItems.length === 0) return;
+    if (activeTab !== "visual" || isVisualEditMode || visualDisplayMode !== "article" || visualChapterItems.length === 0) return;
 
     let observer: IntersectionObserver | null = null;
 
@@ -1420,7 +1420,7 @@ export function NoteContentPanel({ note, onGenerationComplete, aiConfigs, curren
       window.clearTimeout(timer);
       observer?.disconnect();
     };
-  }, [activeTab, isVisualEditMode, note.id, visualChapterItems]);
+  }, [activeTab, isVisualEditMode, visualDisplayMode, note.id, visualChapterItems]);
 
   useEffect(() => {
     return () => {
@@ -2886,7 +2886,7 @@ Video subtitles content:`;
         </div>
         <div className={cn(toolbarBarNoWrapClass, "select-none")}>
           <div ref={visualToolbarMeasureLeftExpandedRef} className={toolbarSectionResponsiveNoWrapClass}>
-            {!isVisualEditMode && visualChapterItems.length > 0 && (
+            {!isVisualEditMode && visualDisplayMode === "article" && visualChapterItems.length > 0 && (
               <div className="relative min-w-0 max-w-full">
                 <button className={cn(toolbarButtonClass, toolbarActionButtonClass, "max-w-full")} type="button">
                   <List className="w-4 h-4" />
@@ -3383,7 +3383,7 @@ Video subtitles content:`;
         // 视觉化总结标签页的专用工具栏
         <div ref={visualToolbarRef} className={cn(toolbarBarNoWrapClass, "select-none")}>
           <div ref={visualToolbarLeftRef} className={toolbarSectionResponsiveNoWrapClass} data-toolbar-row>
-            {!isVisualEditMode && visualChapterItems.length > 0 && (
+            {!isVisualEditMode && visualDisplayMode === "article" && visualChapterItems.length > 0 && (
               <>
                 <div className="relative min-w-0 max-w-full" ref={visualChapterDropdownRef}>
                   <button
