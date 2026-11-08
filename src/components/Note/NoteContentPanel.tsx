@@ -626,7 +626,7 @@ export function NoteContentPanel({ note, onGenerationComplete, aiConfigs, curren
   const [isEditMode, setIsEditMode] = useState(false);
   const [isVisualEditMode, setIsVisualEditMode] = useState(false);
   const [visualEditContent, setVisualEditContent] = useState<string>("");
-  // 视觉化总结展示模式：图文阅读 / 看图复习；复习布局：列表 / 逐图
+  // 视觉化总结展示模式：图文阅读 / 课件视图；课件视图布局：列表 / 逐图
   const [visualDisplayMode, setVisualDisplayMode] = useState<"article" | "review">("article");
   const [visualReviewLayout, setVisualReviewLayout] = useState<"list" | "focus">("list");
   const [showVisualChapterDropdown, setShowVisualChapterDropdown] = useState(false);
@@ -1496,7 +1496,7 @@ export function NoteContentPanel({ note, onGenerationComplete, aiConfigs, curren
     setShowVisualChapterDropdown(false);
 
     if (!isVisualEditMode) {
-      // 进入编辑模式，优先使用已保存的编辑内容；同时回到图文阅读，避免编辑态与复习态混淆
+      // 进入编辑模式，优先使用已保存的编辑内容；同时回到图文阅读，避免编辑态与展示模式混淆
       setVisualDisplayMode("article");
       const savedMarkdown = getSavedVisualMarkdown();
       setVisualEditContent(savedMarkdown || getVisualSummaryDisplayMarkdown());
@@ -2910,14 +2910,14 @@ Video subtitles content:`;
                 </ToolbarIconButton>
                 <ToolbarIconButton
                   icon={Images}
-                  label="看图复习"
+                  label="课件视图"
                   active={visualDisplayMode === "review"}
                   activeClassName={visualToggleActiveClass}
                   compact={false}
                   className={visualToggleButtonClass(false)}
                   onClick={() => setVisualDisplayMode("review")}
                 >
-                  <span className={visualToggleButtonLabelClass}>看图复习</span>
+                  <span className={visualToggleButtonLabelClass}>课件视图</span>
                 </ToolbarIconButton>
               </div>
             )}
@@ -3463,14 +3463,14 @@ Video subtitles content:`;
                 </ToolbarIconButton>
                 <ToolbarIconButton
                   icon={Images}
-                  label="看图复习"
+                  label="课件视图"
                   active={visualDisplayMode === "review"}
                   activeClassName={visualToggleActiveClass}
                   compact={isCompactVisualToolbarLeft}
                   className={visualToggleButtonClass(isCompactVisualToolbarLeft)}
                   onClick={() => setVisualDisplayMode("review")}
                 >
-                  <span className={visualToggleButtonLabelClass}>看图复习</span>
+                  <span className={visualToggleButtonLabelClass}>课件视图</span>
                 </ToolbarIconButton>
               </div>
             )}

@@ -1,7 +1,7 @@
 /**
- * 视觉化总结「图片复习模式」视图
+ * 视觉化总结「课件视图模式」视图
  * 将视觉化总结以图片罗列方式展示：默认只显示章节截图，
- * 点击眼睛图标后在图片下方展开标题与段落内容，用于看图回忆复习。
+ * 点击眼睛图标后在图片下方展开标题与段落内容，用于看图回忆。
  */
 
 import { useMemo, useState } from "react";
@@ -20,7 +20,7 @@ import {
   type VisualReviewSection,
 } from "../../utils/visualReviewSections";
 
-/** 复习布局：列表（一图一行）/ 逐图（一屏一图） */
+/** 课件视图布局：列表（一图一行）/ 逐图（一屏一图） */
 export type VisualReviewLayout = "list" | "focus";
 
 interface VisualSummaryReviewViewProps {
@@ -37,9 +37,9 @@ const reviewImageStyle = { maxHeight: "80vh" } as const;
 const reviewImageWrapperClass = "flex w-full items-center justify-center";
 // 图片容器撑满卡片内容区，并作为尺寸容器：翻页按钮随图片宽度等比缩放
 const reviewImageStackClass = "relative @container flex w-full flex-col items-center gap-2";
-// 左右翻页按钮对称贴边，尺寸随图片宽度缩放
+// 左右翻页按钮对称贴边，尺寸随图片宽度缩放；默认半透明避免遮挡图片信息，悬停/聚焦时实显
 const focusNavButtonClass =
-  "absolute top-1/2 flex h-[clamp(26px,4.6cqw,40px)] w-[clamp(26px,4.6cqw,40px)] -translate-y-1/2 shrink-0 items-center justify-center rounded-full border border-slate-200/80 bg-white/85 text-slate-600 shadow-sm transition-colors hover:bg-white hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-35 dark:border-vnote-border/80 dark:bg-slate-900/70 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-100";
+  "absolute top-1/2 flex h-[clamp(26px,4.6cqw,40px)] w-[clamp(26px,4.6cqw,40px)] -translate-y-1/2 shrink-0 items-center justify-center rounded-full border border-slate-200/50 bg-white/55 text-slate-600 opacity-45 shadow-sm transition-[opacity,background-color,color] duration-200 hover:bg-white/90 hover:text-slate-800 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-20 dark:border-vnote-border/60 dark:bg-slate-900/45 dark:text-slate-300 dark:hover:bg-slate-900/85 dark:hover:text-slate-100";
 const focusNavButtonOffset = "left-[clamp(2px,0.6cqw,6px)]";
 const focusNavButtonOffsetRight = "right-[clamp(2px,0.6cqw,6px)]";
 
@@ -77,7 +77,7 @@ export function VisualSummaryReviewView({ markdown, layout }: VisualSummaryRevie
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-slate-500 dark:text-slate-400">
         <Images className="h-12 w-12 opacity-50" />
-        <p className="text-base font-medium">暂无可复习的图片</p>
+        <p className="text-base font-medium">暂无可展示的图片</p>
         <p className="max-w-md text-center text-sm">
           当前视觉化总结中没有解析到章节截图，请先回到图文模式确认内容。
         </p>

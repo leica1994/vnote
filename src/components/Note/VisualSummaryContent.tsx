@@ -20,9 +20,9 @@ interface VisualSummaryContentProps {
   onEditContentChange?: (content: string) => void;
   /** 已保存的 Markdown 编辑内容（用户编辑后保存的内容） */
   savedMarkdownContent?: string | null;
-  /** 展示模式：图文阅读 / 图片复习（由工具栏切换） */
+  /** 展示模式：图文阅读 / 课件视图（由工具栏切换） */
   displayMode?: "article" | "review";
-  /** 图片复习布局：列表（一图一行）/ 逐图 */
+  /** 课件视图布局：列表（一图一行）/ 逐图 */
   reviewLayout?: VisualReviewLayout;
 }
 
