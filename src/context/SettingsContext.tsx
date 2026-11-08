@@ -106,6 +106,8 @@ interface SettingsContextType {
   setInitializationTemplateRegenerate: (regenerate: boolean) => void;
   setInitializationTemplateModelId: (modelId: string) => void;
   resetInitializationTemplateSettings: () => void;
+  /** 初始设置（含背景图）是否已加载完成，用于控制开屏结束时机 */
+  settingsReady: boolean;
 }
 
 const SettingsContext = createContext<SettingsContextType | null>(null);
@@ -450,15 +452,40 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // 初始加载
+  const [settingsReady, setSettingsReady] = useState(false);
+
   useEffect(() => {
-    refreshAiConfigs();
-    refreshPromptConfigs();
-    loadToolbarSettings();
-    loadTotalWatchTime();
-    loadBackgroundImage();
-    loadBackgroundSettings();
-    loadInitializationTemplateSettings();
-  }, []);
+    let cancelled = false;
+
+    // 开屏期间完成这些加载，避免开屏结束后才出现背景图/统计数据
+    (async () => {
+      try {
+        await Promise.all([
+          refreshAiConfigs(),
+          refreshPromptConfigs(),
+          loadToolbarSettings(),
+          loadTotalWatchTime(),
+          loadBackgroundImage(),
+          loadBackgroundSettings(),
+          loadInitializationTemplateSettings(),
+        ]);
+      } finally {
+        if (!cancelled) setSettingsReady(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    refreshAiConfigs,
+    refreshPromptConfigs,
+    loadToolbarSettings,
+    loadTotalWatchTime,
+    loadBackgroundImage,
+    loadBackgroundSettings,
+    loadInitializationTemplateSettings,
+  ]);
 
   const value = useMemo(() => ({
     aiConfigs,
@@ -489,6 +516,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setInitializationTemplateRegenerate,
     setInitializationTemplateModelId,
     resetInitializationTemplateSettings,
+    settingsReady,
   }), [
     aiConfigs,
     promptConfigs,
@@ -516,6 +544,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setInitializationTemplateRegenerate,
     setInitializationTemplateModelId,
     resetInitializationTemplateSettings,
+    settingsReady,
   ]);
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

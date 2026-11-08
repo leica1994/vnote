@@ -1538,18 +1538,10 @@ input[type="password"]::-ms-clear {
   background-image: radial-gradient(circle at 50% 42%, #ffffff 0%, #f5f7fa 60%);
 }
 
-.splash--started {
-  animation: splash-out 300ms ease-in 1000ms forwards;
-}
-
 .splash__content {
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-.splash--started .splash__content {
-  animation: splash-content-out 300ms ease-in 1000ms both;
 }
 
 .splash__logo-wrap {
@@ -1647,6 +1639,16 @@ input[type="password"]::-ms-clear {
   }
 }
 
+/* 退场：等首页资源就绪后才触发，淡出期间下层已是加载完成的首页 */
+.splash--exit {
+  animation: splash-out 300ms ease-in forwards;
+  pointer-events: none;
+}
+
+.splash--exit .splash__content {
+  animation: splash-content-out 300ms ease-in forwards;
+}
+
 /* 整体淡出，同时轻微放大，产生"穿过"的观感 */
 @keyframes splash-content-out {
   0% {
@@ -1674,7 +1676,8 @@ input[type="password"]::-ms-clear {
     opacity: 1;
   }
 
-  .splash--started .splash__content {
-    animation: none;
+  .splash--exit,
+  .splash--exit .splash__content {
+    animation-duration: 1ms;
   }
 }

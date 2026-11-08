@@ -33,8 +33,8 @@ function PageLoadingFallback() {
 }
 
 function AppContent() {
-  const { currentView, setCurrentView } = useApp();
-  const { backgroundImage, backgroundSettings } = useSettings();
+  const { currentView, setCurrentView, notesLoaded } = useApp();
+  const { backgroundImage, backgroundSettings, settingsReady } = useSettings();
   const titleBarBg = useGlassBg("panel");
   const [theme, setTheme] = useState<"light" | "dark">("dark");
   const [previousView, setPreviousView] = useState<NavigableViewType>(VIEW_TYPES.HOME);
@@ -45,6 +45,10 @@ function AppContent() {
   const [splashDone, setSplashDone] = useState(false);
 
   const handleSplashDone = useCallback(() => setSplashDone(true), []);
+
+  // 首页资源就绪：笔记列表 + 设置（含背景图）都加载完成后再结束开屏，
+  // 避免开屏淡出后才发现背景图和首页模块是空的
+  const homeReady = notesLoaded && settingsReady;
 
   useEffect(() => {
     // Load saved theme
@@ -318,7 +322,13 @@ function AppContent() {
       </div>
 
       {/* 启动开屏覆盖层：窗口显示后才开始动画，结束后卸载，不参与后续布局 */}
-      {!splashDone && <SplashScreen onDone={handleSplashDone} />}
+      {!splashDone && (
+        <SplashScreen
+          onDone={handleSplashDone}
+          ready={homeReady}
+          backgroundImage={backgroundImage}
+        />
+      )}
     </div>
   );
 }

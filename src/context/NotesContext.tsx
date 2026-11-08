@@ -9,6 +9,8 @@ import { getNoteGenerationState, getActiveGenerationIds, clearNoteGenerationStat
 
 interface NotesContextType {
   notes: Note[];
+  /** 首次笔记列表加载是否完成，用于控制开屏结束时机 */
+  notesLoaded: boolean;
   refreshNotes: () => Promise<void>;
   refreshNoteById: (noteId: string) => Promise<void>;
   createNote: (req: CreateNoteRequest) => Promise<Note>;
@@ -45,6 +47,7 @@ interface NotesProviderProps {
 
 export function NotesProvider({ children, onStatsUpdate, onBeforeNoteDelete }: NotesProviderProps) {
   const [notes, setNotes] = useState<Note[]>([]);
+  const [notesLoaded, setNotesLoaded] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentView, setCurrentView] = useState<ViewType>("home");
@@ -96,6 +99,10 @@ export function NotesProvider({ children, onStatsUpdate, onBeforeNoteDelete }: N
         return;
       }
       console.error("Failed to load notes:", error);
+    } finally {
+      if (requestId === latestRefreshRequestIdRef.current) {
+        setNotesLoaded(true);
+      }
     }
   }, [updateStats]);
 
@@ -215,6 +222,7 @@ export function NotesProvider({ children, onStatsUpdate, onBeforeNoteDelete }: N
 
   const value = useMemo(() => ({
     notes,
+    notesLoaded,
     refreshNotes,
     refreshNoteById,
     createNote,
@@ -232,6 +240,7 @@ export function NotesProvider({ children, onStatsUpdate, onBeforeNoteDelete }: N
     updateStats,
   }), [
     notes,
+    notesLoaded,
     refreshNotes,
     refreshNoteById,
     createNote,

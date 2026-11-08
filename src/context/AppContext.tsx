@@ -45,6 +45,8 @@ interface AppContextType {
   // 数据
   folders: Folder[];
   notes: Note[];
+  /** 首次笔记加载是否完成，用于控制开屏结束时机 */
+  notesLoaded: boolean;
   stats: AppStats;
   aiConfigs: AiConfig[];
   promptConfigs: PromptConfig[];
@@ -127,6 +129,8 @@ interface AppContextType {
   setInitializationTemplateModelId: (modelId: string) => void;
   resetInitializationTemplateSettings: () => void;
 
+  /** 初始设置（含背景图）是否已加载完成，用于控制开屏结束时机 */
+  settingsReady: boolean;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -158,6 +162,7 @@ function AppContextBridge({ children }: { children: ReactNode }) {
 
     // 笔记
     notes: notesContext.notes,
+    notesLoaded: notesContext.notesLoaded,
     refreshNotes: notesContext.refreshNotes,
     createNote: notesContext.createNote,
     updateNote: notesContext.updateNote,
@@ -195,6 +200,7 @@ function AppContextBridge({ children }: { children: ReactNode }) {
     setInitializationTemplateRegenerate: settingsContext.setInitializationTemplateRegenerate,
     setInitializationTemplateModelId: settingsContext.setInitializationTemplateModelId,
     resetInitializationTemplateSettings: settingsContext.resetInitializationTemplateSettings,
+    settingsReady: settingsContext.settingsReady,
 
     // 上传
     uploadedItems: uploadContext.uploadedItems,
