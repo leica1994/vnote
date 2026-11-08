@@ -8,6 +8,18 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // 在样式与 React 挂载前同步应用主题：
+      // 窗口已提前显示，首帧必须直接是正确的底色，否则会先闪一下亮/暗再切换。
+      // 深色是默认值（与 tauri.conf.json 中窗口创建底色一致），只有亮色才需要显式标记。
+      try {
+        var t = localStorage.getItem("vnote_theme");
+        if (t === "light") document.documentElement.classList.add("splash-light");
+        else document.documentElement.classList.add("dark");
+      } catch (e) {
+        document.documentElement.classList.add("dark");
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

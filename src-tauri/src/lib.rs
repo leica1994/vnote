@@ -2162,6 +2162,20 @@ pub fn run() {
                     let _ = window.set_decorations(false);
                 }
 
+                // 按保存的主题设置窗口与 WebView 底色，使加载阶段与开屏首帧同色。
+                // 注：WebView 层在创建后改色并非总是生效，tauri.conf.json 中已用深色兜底。
+                let splash_light = DATABASE
+                    .get()
+                    .and_then(|db| db.get_app_settings().ok())
+                    .map(|settings| settings.theme == "light")
+                    .unwrap_or(false);
+                let window_bg = if splash_light {
+                    tauri::window::Color(245, 247, 250, 255)
+                } else {
+                    tauri::window::Color(10, 10, 10, 255)
+                };
+                let _ = window.set_background_color(Some(window_bg));
+
                 if let Ok(icon) = Image::from_bytes(TRAY_ICON) {
                     let _ = window.set_icon(icon);
                 }
@@ -2178,11 +2192,14 @@ pub fn run() {
                     (1440.0, 1000.0)
                 };
 
-                // 设置窗口大小
+                // 设置窗口大小并居中（先摆好位置再显示，避免窗口先出现在左上角再跳动）
                 let _ = window.set_size(tauri::Size::Logical(tauri::LogicalSize { width, height }));
-
-                // 居中显示
                 let _ = window.center();
+
+                // 以主题底色先行显示窗口，再由前端播放开屏动画：
+                // 若等 JS 加载完再显示，等待期间用户只看到桌面，表现为"点了图标要等一会才弹出"
+                let _ = window.show();
+                let _ = window.set_focus();
             }
 
             Ok(())

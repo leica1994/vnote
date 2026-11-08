@@ -20,8 +20,6 @@ const CollectionPage = lazy(() => import("./components/Collection").then(m => ({
 const RecentNotesPage = lazy(() => import("./components/Notes").then(m => ({ default: m.RecentNotesPage })));
 const KnowledgeBasePage = lazy(() => import("./components/KnowledgeBase").then(m => ({ default: m.KnowledgeBasePage })));
 
-let hasRequestedInitialWindowShow = false;
-
 // 加载占位组件
 function PageLoadingFallback() {
   return (
@@ -43,12 +41,13 @@ function AppContent() {
   const [shouldMountKnowledgeBase, setShouldMountKnowledgeBase] = useState(
     currentView === VIEW_TYPES.KNOWLEDGE_BASE
   );
-  // 启动开屏动画，结束后卸载覆盖层；回调保持稳定，避免开屏计时被重置
+  // 启动开屏：窗口已由 Rust 侧以主题底色先行显示，前端挂载后即播放动画
   const [splashDone, setSplashDone] = useState(false);
+
   const handleSplashDone = useCallback(() => setSplashDone(true), []);
 
   useEffect(() => {
-    // Load saved theme and show window
+    // Load saved theme
     const init = async () => {
       try {
         const settings = await invoke<{ theme: string; tray_enabled: boolean }>("get_app_settings");
@@ -58,21 +57,14 @@ function AppContent() {
         } else {
           document.documentElement.classList.remove("dark");
         }
+        document.documentElement.classList.toggle("splash-light", savedTheme === "light");
+        // 缓存给 index.html 的同步脚本，下次启动首帧就能选对底色
+        localStorage.setItem("vnote_theme", savedTheme);
         setTheme(savedTheme);
       } catch {
         // Default to dark theme
         document.documentElement.classList.add("dark");
         setTheme("dark");
-      }
-      if (!hasRequestedInitialWindowShow) {
-        hasRequestedInitialWindowShow = true;
-        // 等开屏覆盖层（含主题背景色）完成首帧合成后再显示窗口，
-        // 避免用户看到未上色的空白启动帧
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            invoke("show_window").catch(console.error);
-          });
-        });
       }
     };
     init();
@@ -135,6 +127,7 @@ function AppContent() {
     } else {
       document.documentElement.classList.remove("dark");
     }
+    localStorage.setItem("vnote_theme", newTheme);
     setTheme(newTheme);
   }, []);
 
@@ -324,7 +317,7 @@ function AppContent() {
         </main>
       </div>
 
-      {/* 启动开屏覆盖层：动画结束后卸载，不参与后续布局 */}
+      {/* 启动开屏覆盖层：窗口显示后才开始动画，结束后卸载，不参与后续布局 */}
       {!splashDone && <SplashScreen onDone={handleSplashDone} />}
     </div>
   );

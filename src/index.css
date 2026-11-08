@@ -1518,6 +1518,7 @@ input[type="password"]::-ms-clear {
 
 /* ===== 启动开屏动画 ===== */
 /* 动画只在 `.splash--started` 后启用：等首帧合成完成再起动画，避免与首次绘制抢资源 */
+/* 默认深色：与 tauri.conf.json 的窗口创建期底色一致，窗口显示瞬间不会闪色 */
 .splash {
   position: fixed;
   inset: 0;
@@ -1527,13 +1528,14 @@ input[type="password"]::-ms-clear {
   justify-content: center;
   user-select: none;
   -webkit-user-select: none;
-  background-color: #f5f7fa;
-  background-image: radial-gradient(circle at 50% 42%, #ffffff 0%, #f5f7fa 60%);
-}
-
-.dark .splash {
   background-color: #0a0a0a;
   background-image: radial-gradient(circle at 50% 42%, #171717 0%, #0a0a0a 60%);
+}
+
+/* 亮色主题：与 index.html 同步脚本挂上的 root 类配合，首帧即是浅色底 */
+:root.splash-light .splash {
+  background-color: #f5f7fa;
+  background-image: radial-gradient(circle at 50% 42%, #ffffff 0%, #f5f7fa 60%);
 }
 
 .splash--started {
@@ -1587,12 +1589,12 @@ input[type="password"]::-ms-clear {
   font-size: 18px;
   font-weight: 600;
   letter-spacing: 0.4px;
-  color: #1e293b;
+  color: #f1f5f9;
   opacity: 0;
 }
 
-.dark .splash__title {
-  color: #f1f5f9;
+:root.splash-light .splash__title {
+  color: #1e293b;
 }
 
 .splash--started .splash__glow {

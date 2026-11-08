@@ -16,6 +16,7 @@
         "minWidth": 1024,
         "minHeight": 700,
         "visible": false,
+        "backgroundColor": "#0a0a0a",
         "label": "main"
       }
     ],
