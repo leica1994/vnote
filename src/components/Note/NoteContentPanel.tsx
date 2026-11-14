@@ -226,6 +226,20 @@ function getElementContentWidth(element: HTMLElement | null): number {
   return Math.max(element.scrollWidth, element.offsetWidth);
 }
 
+/**
+ * 计算工具栏行内可用于摆放左右分区的宽度。
+ * clientWidth 含左右内边距，左右分区之间还有 flex gap，这两部分都不会给内容留出空间，
+ * 因此都要扣除；否则会低估所需宽度，使分区内容溢出并叠在一起。
+ */
+function getToolbarAvailableWidth(element: HTMLElement | null): number {
+  if (!element) return 0;
+  const style = window.getComputedStyle(element);
+  const paddingLeft = parseFloat(style.paddingLeft) || 0;
+  const paddingRight = parseFloat(style.paddingRight) || 0;
+  const columnGap = parseFloat(style.columnGap) || 0;
+  return Math.max(0, element.clientWidth - paddingLeft - paddingRight - columnGap);
+}
+
 function ToolbarIconButton({
   icon: Icon,
   label,
@@ -1295,13 +1309,13 @@ export function NoteContentPanel({ note, onGenerationComplete, aiConfigs, curren
     if (!toolbarElement || !measureLeftExpandedElement || !measureRightCompactElement || !measureRightExpandedElement) return;
 
     const updateCompactMode = () => {
-      const toolbarWidth = toolbarElement.clientWidth;
+      const availableWidth = getToolbarAvailableWidth(toolbarElement);
       const leftExpandedWidth = getElementContentWidth(measureLeftExpandedElement);
       const rightCompactWidth = getElementContentWidth(measureRightCompactElement);
       const rightExpandedWidth = getElementContentWidth(measureRightExpandedElement);
 
-      const nextLeftCompact = leftExpandedWidth + rightCompactWidth > toolbarWidth + 1;
-      const nextRightCompact = nextLeftCompact || leftExpandedWidth + rightExpandedWidth > toolbarWidth + 1;
+      const nextLeftCompact = leftExpandedWidth + rightCompactWidth > availableWidth + 1;
+      const nextRightCompact = nextLeftCompact || leftExpandedWidth + rightExpandedWidth > availableWidth + 1;
       const prevState = visualToolbarCompactStateRef.current;
 
       if (prevState.left !== nextLeftCompact) {
